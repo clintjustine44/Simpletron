@@ -1,5 +1,3 @@
-package PracticeSimpletron;
-
 import java.io.*;
 import java.util.*;
 
@@ -36,8 +34,8 @@ public class Simpletron {
     }
 
     public void execute(){
-        for(int i = 0; i < programSize; i++){
-            instructionRegister = memory.getItem(i);
+        while(programCounter < programSize){
+            instructionRegister = memory.getItem(programCounter);
             operationCode = instructionRegister.substring(0,2);
             operand = instructionRegister.substring(2,4);
             programCounter++;
@@ -47,6 +45,7 @@ public class Simpletron {
                 System.out.println("This program has completed its task.");
                 break;
             }
+
             microcode();
         }
         this.printMemory();
@@ -58,6 +57,8 @@ public class Simpletron {
 
     public void microcode(){
         String data = null;
+        int divisor, immediateDivisor;
+
         switch(operationCode){
             // Read a word from the keyboard into a specific location in memory
             case "10":
@@ -93,11 +94,98 @@ public class Simpletron {
                 data = String.format("%04d", accumulator);
                 memory.addItem(Integer.parseInt(operand), data);
                 break;
-            // Load an immediate value (00-99) into the accumulator. The 2 digit operand becomes the immediate value to be loaded in the accumulator.
+            /* Load an immediate value (00-99) into the accumulator. The 2 digit
+            *  operand becomes the immediate value to be loaded in the accumulator.
+            */
             case "22":
                 data = operand;
                 accumulator = Integer.parseInt(data);
                 break;
+            // Operand comes from memory:
+
+            /* Add a word from a specific location in memory to the word in the
+            *  accumulator (leave the result in the accumulator)
+            */
+            case "30":
+                data = memory.getItem(Integer.parseInt(operand.strip()));
+                accumulator += Integer.parseInt(data);
+                break;
+            /* Subtract a word from a specific location in memory from the 
+             * word in the accumulator (leave the result in the accumulator).
+            */
+            case "31":
+                data = memory.getItem(Integer.parseInt(operand.strip()));
+                accumulator -= Integer.parseInt(data);
+                break;
+            /* Divide the accumulator by the word from a specific 
+             * location in memory (leave the result in the accumulator).
+             */
+            case "32":
+                data = memory.getItem(Integer.parseInt(operand.strip()));
+                divisor = Integer.parseInt(data);
+                if(divisor == 0){
+                    System.out.printf("Error: Division by zero at instruction %02d.", programCounter - 1);
+                }
+                else 
+                    accumulator %= divisor;
+                break;
+            case "33":
+                data = memory.getItem(Integer.parseInt(operand.strip()));
+                divisor = Integer.parseInt(data);
+                
+                if(divisor == 0){
+                    System.out.printf("Error: Modulo by zero at instruction %02d.", programCounter - 1);
+                }
+                else 
+                    accumulator %= divisor;
+
+                break;
+            case "34":
+                data = memory.getItem(Integer.parseInt(operand.strip()));
+                accumulator *= Integer.parseInt(data);
+                break;
+            // Operand is immediate:
+            case "35":
+                data = operand.strip();
+                accumulator += Integer.parseInt(data);
+                break;
+            case "36":
+                data = operand.strip();
+                accumulator -= Integer.parseInt(data);
+                break;
+            case "37":
+                data = operand.strip();
+                immediateDivisor = Integer.parseInt(data);
+                if(immediateDivisor == 0){
+                    System.out.printf("Error: Division by zero at instruction %02d.", programCounter - 1);
+                    System.exit(1);
+                }
+                else
+                    accumulator /= immediateDivisor;
+                break;
+            case "38":
+                data = operand.strip();
+                immediateDivisor = Integer.parseInt(data);
+                if(immediateDivisor == 0){
+                    System.out.printf("Error: Modulo by zero at instruction %02d.", programCounter - 1);
+                    System.exit(1);
+                }else 
+                    accumulator %= Integer.parseInt(data);
+                break;
+            case "39":
+                data = operand.strip();
+                accumulator *= Integer.parseInt(data);
+                break;
+            case "40":
+                programCounter = Integer.parseInt(operand.strip());
+                break;
+            case "41":
+                if(accumulator < 0)
+                    programCounter = Integer.parseInt(operand.strip());
+                break;
+            case "42":
+                if(accumulator == 0)
+                    programCounter = Integer.parseInt(operand.strip());
             // Halt - this program has completed its task
             case "43":
                 break;

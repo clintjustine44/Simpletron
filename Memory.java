@@ -1,5 +1,3 @@
-package PracticeSimpletron;
-
 public class Memory {
     private final int MEMORY_SIZE = 100;
     private String[] mem;
