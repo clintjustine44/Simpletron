@@ -76,13 +76,14 @@ public class Simpletron {
                 if(value > 9999) value = 9999;
                 if(value < -9999) value = -9999;
 
-                String formattedData = String.format("%04d", value);
+                String formattedData = String.format("%+05d", value); // +00123 if its %05d, if its %04d, Test 2 will print -045 instead of -0045 in memory
                 memory.addItem(Integer.parseInt(operand.strip()), formattedData);
                 break;
             // Write a word from a specific location in memory to the screen
             case "11":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
-                System.out.println("Data: " + data);
+                int outvalue = Integer.parseInt(data);
+                System.out.printf("Data: %+05d\n", outvalue);
                 break;
             // Load a word from a specific location in memory into the accumulator
             case "20":
@@ -91,7 +92,7 @@ public class Simpletron {
                 break;
             // Store a word from the accumulator into a specific location in memory
             case "21":
-                data = String.format("%04d", accumulator);
+                data = String.format("%+05d", accumulator);
                 memory.addItem(Integer.parseInt(operand), data);
                 break;
             /* Load an immediate value (00-99) into the accumulator. The 2 digit
@@ -127,7 +128,7 @@ public class Simpletron {
                     System.out.printf("Error: Division by zero at instruction %02d.", programCounter - 1);
                 }
                 else 
-                    accumulator %= divisor;
+                    accumulator /= divisor;
                 break;
             case "33":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
@@ -186,6 +187,7 @@ public class Simpletron {
             case "42":
                 if(accumulator == 0)
                     programCounter = Integer.parseInt(operand.strip());
+                break;
             // Halt - this program has completed its task
             case "43":
                 break;

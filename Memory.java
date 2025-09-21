@@ -5,7 +5,7 @@ public class Memory {
     public Memory(){
         mem = new String[MEMORY_SIZE];
         for(int i = 0; i < 100; i++){
-            mem[i] = "0000";
+            mem[i] = "+0000";
         }
     }
     
@@ -33,19 +33,26 @@ public class Memory {
         System.out.println();
 
         for (int i = 0; i < MEMORY_SIZE; i++) {
-           if (i % 10 == 0) System.out.printf("%02d   ", i);
-           
-           String value = mem[i];
+            if (i % 10 == 0) System.out.printf("%02d   ", i);
 
-            // Default to 0 if null
+            String value = mem[i];
+
             if (value == null) value = "0000";
 
-            // Add + sign if it's not negative
-            if (!value.startsWith("-")) value = "+" + value;
+            // Ensure all values have a sign
+            if (!(value.startsWith("+") || value.startsWith("-"))) {
+                try {
+                    int num = Integer.parseInt(value);
+                    value = String.format("%+05d", num); // force sign and 5-digit format
+                } catch (NumberFormatException e) {
+                    value = "+0000"; // fallback safety
+                }
+            }
 
-           System.out.printf("%6s", value);
-           
-           if (i % 10 == 9) System.out.println();
-         }
+            System.out.printf("%6s", value);
+
+            if (i % 10 == 9) System.out.println();
+        }
+
     }
 }
