@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Simpletron {
     Memory memory = new Memory();
-    int accumulator; // Accumulator
+    int accumulator;
     int programCounter, programSize;
     String instructionRegister, operationCode, operand;
 
@@ -42,7 +42,7 @@ public class Simpletron {
         return new Scanner(System.in).nextLine();
     }
 
-    /** Runs until completion (no clears, no "Executing...") */
+    // Runs until completion
     public void run() {
         while (programCounter < programSize) {
             instructionRegister = memory.getItem(programCounter);
@@ -59,7 +59,7 @@ public class Simpletron {
         }
     }
 
-    /** Executes one instruction (step, used only in step-by-step mode) */
+    // Executes one instruction (step, used only in step-by-step mode)
     public boolean step() {
         if (programCounter >= programSize) return false;
 
@@ -84,7 +84,7 @@ public class Simpletron {
         return true;
     }
 
-    /** Runs step by step (prints memory after each instruction) */
+    // Runs step by step (prints memory after each instruction)
     public void runStepByStep() {
         Scanner sc = new Scanner(System.in);
         printMemory();
@@ -106,7 +106,7 @@ public class Simpletron {
         int divisor, immediateDivisor;
 
         switch(operationCode){
-            case "10":
+            case "10": // Read
                 System.out.println("Enter a value (-9999 to 9999): ");
                 data = getInput();
 
@@ -125,38 +125,38 @@ public class Simpletron {
                 memory.addItem(Integer.parseInt(operand.strip()), formattedData);
                 break;
 
-            case "11":
+            case "11": // Write
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 int outvalue = Integer.parseInt(data);
                 System.out.printf("%+05d\n", outvalue);
                 break;
 
-            case "20":
+            case "20": // LoadM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator = Integer.parseInt(data);
                 break;
 
-            case "21":
+            case "21": // Store
                 data = String.format("%+05d", accumulator);
                 memory.addItem(Integer.parseInt(operand), data);
                 break;
 
-            case "22":
+            case "22": // LoadI
                 data = operand;
                 accumulator = Integer.parseInt(data);
                 break;
 
-            case "30":
+            case "30": // AddM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator += Integer.parseInt(data);
                 break;
 
-            case "31":
+            case "31": // SubM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator -= Integer.parseInt(data);
                 break;
 
-            case "32":
+            case "32": // DivM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
                 if(divisor == 0){
@@ -166,7 +166,7 @@ public class Simpletron {
                     accumulator /= divisor;
                 break;
 
-            case "33":
+            case "33": // ModM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
                 if(divisor == 0){
@@ -176,22 +176,22 @@ public class Simpletron {
                     accumulator %= divisor;
                 break;
 
-            case "34":
+            case "34": // MulM
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator *= Integer.parseInt(data);
                 break;
 
-            case "35":
+            case "35": // AddI
                 data = operand.strip();
                 accumulator += Integer.parseInt(data);
                 break;
 
-            case "36":
+            case "36": // SubI
                 data = operand.strip();
                 accumulator -= Integer.parseInt(data);
                 break;
 
-            case "37":
+            case "37": // DivI
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
                 if(immediateDivisor == 0){
@@ -202,7 +202,7 @@ public class Simpletron {
                     accumulator /= immediateDivisor;
                 break;
 
-            case "38":
+            case "38": // ModI
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
                 if(immediateDivisor == 0){
@@ -212,22 +212,22 @@ public class Simpletron {
                     accumulator %= Integer.parseInt(data);
                 break;
 
-            case "39":
+            case "39": // MulI
                 data = operand.strip();
                 accumulator *= Integer.parseInt(data);
                 break;
 
-            case "40": // BRANCH
+            case "40": // JMP
                 programCounter = Integer.parseInt(operand.strip());
                 break;
 
-            case "41": // BRANCHNEG
+            case "41": // JN
                 if (accumulator < 0) {
                     programCounter = Integer.parseInt(operand.strip());
                 }
                 break;
 
-            case "42": // BRANCHZERO
+            case "42": // JZ
                 if (accumulator == 0) {
                     programCounter = Integer.parseInt(operand.strip());
                 }
