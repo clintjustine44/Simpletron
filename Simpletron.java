@@ -8,12 +8,17 @@ public class Simpletron {
     String instructionRegister, operationCode, operand;
 
     public Simpletron(String filename){
-        String[] data = new String[100];
+        accumulator = 0;
+        programCounter = 0;
+        programSize = 0;
+        instructionRegister = "0000";
+        operand = "00";
+        operationCode = "00";
         try {
             Scanner scanner = new Scanner(new File(filename));
             while(scanner.hasNextLine()){
                 String line = scanner.nextLine();
-                data = line.split(" ");
+                String[] data = line.split(" ");
                 memory.addItem(Integer.parseInt(data[0]), data[1]);
                 programSize++;
             }
@@ -33,34 +38,74 @@ public class Simpletron {
         memory.dump();
     }
 
-    public void execute(){
-        while(programCounter < programSize){
+    private String getInput(){
+        return new Scanner(System.in).nextLine();
+    }
+
+    /** Runs until completion (no clears, no "Executing...") */
+    public void run() {
+        while (programCounter < programSize) {
             instructionRegister = memory.getItem(programCounter);
             operationCode = instructionRegister.substring(0,2);
             operand = instructionRegister.substring(2,4);
             programCounter++;
 
-            // Stops the program when HALT = 43 is encountered.
-            if(operationCode.equals("43")){
-                System.out.println("This program has completed its task.");
+            if (operationCode.equals("43")) { // HALT
+                System.out.println("\nThis program has completed its task.");
                 break;
             }
 
             microcode();
         }
-        this.printMemory();
     }
 
-    private String getInput(){
-        return new Scanner(System.in).nextLine();
+    /** Executes one instruction (step, used only in step-by-step mode) */
+    public boolean step() {
+        if (programCounter >= programSize) return false;
+
+        instructionRegister = memory.getItem(programCounter);
+        operationCode = instructionRegister.substring(0,2);
+        operand = instructionRegister.substring(2,4);
+
+        // Clear terminal before showing execution
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+
+        System.out.println("Executing " + instructionRegister + "...");
+
+        programCounter++;
+
+        if (operationCode.equals("43")) { // HALT
+            System.out.println("This program has completed its task.");
+            return false;
+        }
+
+        microcode();
+        return true;
     }
+
+    /** Runs step by step (prints memory after each instruction) */
+    public void runStepByStep() {
+        Scanner sc = new Scanner(System.in);
+        printMemory();
+        System.out.print("\nPress enter to start execution...");
+        sc.nextLine();
+
+        while (step()) {
+            printMemory();
+            System.out.print("\nPress Enter to continue: ");
+            sc.nextLine();
+        }
+        this.printMemory(); // final dump after program ends
+    }
+
+
 
     public void microcode(){
         String data = null;
         int divisor, immediateDivisor;
 
         switch(operationCode){
-            // Read a word from the keyboard into a specific location in memory
             case "10":
                 System.out.println("Enter a value (-9999 to 9999): ");
                 data = getInput();
@@ -76,51 +121,41 @@ public class Simpletron {
                 if(value > 9999) value = 9999;
                 if(value < -9999) value = -9999;
 
-                String formattedData = String.format("%+05d", value); // +00123 if its %05d, if its %04d, Test 2 will print -045 instead of -0045 in memory
+                String formattedData = String.format("%+05d", value);
                 memory.addItem(Integer.parseInt(operand.strip()), formattedData);
                 break;
-            // Write a word from a specific location in memory to the screen
+
             case "11":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 int outvalue = Integer.parseInt(data);
-                System.out.printf("Data: %+05d\n", outvalue);
+                System.out.printf("%+05d\n", outvalue);
                 break;
-            // Load a word from a specific location in memory into the accumulator
+
             case "20":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator = Integer.parseInt(data);
                 break;
-            // Store a word from the accumulator into a specific location in memory
+
             case "21":
                 data = String.format("%+05d", accumulator);
                 memory.addItem(Integer.parseInt(operand), data);
                 break;
-            /* Load an immediate value (00-99) into the accumulator. The 2 digit
-            *  operand becomes the immediate value to be loaded in the accumulator.
-            */
+
             case "22":
                 data = operand;
                 accumulator = Integer.parseInt(data);
                 break;
-            // Operand comes from memory:
 
-            /* Add a word from a specific location in memory to the word in the
-            *  accumulator (leave the result in the accumulator)
-            */
             case "30":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator += Integer.parseInt(data);
                 break;
-            /* Subtract a word from a specific location in memory from the 
-             * word in the accumulator (leave the result in the accumulator).
-            */
+
             case "31":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator -= Integer.parseInt(data);
                 break;
-            /* Divide the accumulator by the word from a specific 
-             * location in memory (leave the result in the accumulator).
-             */
+
             case "32":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
@@ -130,30 +165,32 @@ public class Simpletron {
                 else 
                     accumulator /= divisor;
                 break;
+
             case "33":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
-                
                 if(divisor == 0){
                     System.out.printf("Error: Modulo by zero at instruction %02d.", programCounter - 1);
                 }
                 else 
                     accumulator %= divisor;
-
                 break;
+
             case "34":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator *= Integer.parseInt(data);
                 break;
-            // Operand is immediate:
+
             case "35":
                 data = operand.strip();
                 accumulator += Integer.parseInt(data);
                 break;
+
             case "36":
                 data = operand.strip();
                 accumulator -= Integer.parseInt(data);
                 break;
+
             case "37":
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
@@ -164,6 +201,7 @@ public class Simpletron {
                 else
                     accumulator /= immediateDivisor;
                 break;
+
             case "38":
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
@@ -173,28 +211,48 @@ public class Simpletron {
                 }else 
                     accumulator %= Integer.parseInt(data);
                 break;
+
             case "39":
                 data = operand.strip();
                 accumulator *= Integer.parseInt(data);
                 break;
-            case "40":
+
+            case "40": // BRANCH
                 programCounter = Integer.parseInt(operand.strip());
                 break;
-            case "41":
-                if(accumulator < 0)
+
+            case "41": // BRANCHNEG
+                if (accumulator < 0) {
                     programCounter = Integer.parseInt(operand.strip());
+                }
                 break;
-            case "42":
-                if(accumulator == 0)
+
+            case "42": // BRANCHZERO
+                if (accumulator == 0) {
                     programCounter = Integer.parseInt(operand.strip());
+                }
                 break;
-            // Halt - this program has completed its task
-            case "43":
+            default:
                 break;
         }
     }
+
     public static void main(String[] args) {
-        Simpletron simpletron = new Simpletron("test.sml");
-        simpletron.execute();
+        if (args.length == 0) {
+            System.out.println("Usage:");
+            System.out.println("  java Simpletron program.sml         # run to completion");
+            System.out.println("  java Simpletron program.sml -s      # step by step");
+            return;
+        }
+
+        String filename = args[0];
+        boolean stepMode = args.length > 1 && args[1].equals("-s");
+
+        Simpletron simpletron = new Simpletron(filename);
+        if (stepMode) {
+            simpletron.runStepByStep();
+        } else {
+            simpletron.run();
+        }
     }
 }
