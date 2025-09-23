@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Simpletron {
     Memory memory = new Memory();
-    int accumulator;
+    int accumulator; // Accumulator
     int programCounter, programSize;
     String instructionRegister, operationCode, operand;
 
@@ -42,7 +42,7 @@ public class Simpletron {
         return new Scanner(System.in).nextLine();
     }
 
-    // Runs until completion
+    /** Runs until completion (no clears, no "Executing...") */
     public void run() {
         while (programCounter < programSize) {
             instructionRegister = memory.getItem(programCounter);
@@ -59,7 +59,7 @@ public class Simpletron {
         }
     }
 
-    // Executes one instruction (step, used only in step-by-step mode)
+    /** Executes one instruction (step, used only in step-by-step mode) */
     public boolean step() {
         if (programCounter >= programSize) return false;
 
@@ -84,7 +84,7 @@ public class Simpletron {
         return true;
     }
 
-    // Runs step by step (prints memory after each instruction)
+    /** Runs step by step (prints memory after each instruction) */
     public void runStepByStep() {
         Scanner sc = new Scanner(System.in);
         printMemory();
@@ -99,6 +99,13 @@ public class Simpletron {
         this.printMemory(); // final dump after program ends
     }
 
+    private int clampAccumulator() {
+        if (accumulator > 9999) 
+            return 9999;
+        if (accumulator < -9999) 
+            return -9999;
+        return accumulator;
+    }
 
 
     public void microcode(){
@@ -106,7 +113,8 @@ public class Simpletron {
         int divisor, immediateDivisor;
 
         switch(operationCode){
-            case "10": // Read
+            // READ
+            case "10":
                 System.out.println("Enter a value (-9999 to 9999): ");
                 data = getInput();
 
@@ -124,110 +132,129 @@ public class Simpletron {
                 String formattedData = String.format("%+05d", value);
                 memory.addItem(Integer.parseInt(operand.strip()), formattedData);
                 break;
-
-            case "11": // Write
+            // WRITE
+            case "11":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 int outvalue = Integer.parseInt(data);
                 System.out.printf("%+05d\n", outvalue);
                 break;
-
-            case "20": // LoadM
+            // LoadM
+            case "20":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator = Integer.parseInt(data);
                 break;
-
-            case "21": // Store
+            // Store
+            case "21":
                 data = String.format("%+05d", accumulator);
                 memory.addItem(Integer.parseInt(operand), data);
                 break;
-
-            case "22": // LoadI
+            // LoadI
+            case "22":
                 data = operand;
                 accumulator = Integer.parseInt(data);
                 break;
-
-            case "30": // AddM
+            // AddM
+            case "30":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator += Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "31": // SubM
+            // SubM
+            case "31":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator -= Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "32": // DivM
+            // DivM
+            case "32":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
                 if(divisor == 0){
                     System.out.printf("Error: Division by zero at instruction %02d.", programCounter - 1);
+                    System.exit(1);
                 }
-                else 
+                else {
                     accumulator /= divisor;
+                    accumulator = clampAccumulator();
+                }
                 break;
-
-            case "33": // ModM
+            // ModM
+            case "33":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 divisor = Integer.parseInt(data);
                 if(divisor == 0){
                     System.out.printf("Error: Modulo by zero at instruction %02d.", programCounter - 1);
+                    System.exit(1);
                 }
-                else 
+                else {
                     accumulator %= divisor;
+                    accumulator = clampAccumulator();
+                }
+                    
                 break;
-
-            case "34": // MulM
+            // MulM
+            case "34":
                 data = memory.getItem(Integer.parseInt(operand.strip()));
                 accumulator *= Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "35": // AddI
+            // AddI
+            case "35":
                 data = operand.strip();
                 accumulator += Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "36": // SubI
+            // SubI
+            case "36":
                 data = operand.strip();
                 accumulator -= Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "37": // DivI
+            // DivI
+            case "37":
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
                 if(immediateDivisor == 0){
                     System.out.printf("Error: Division by zero at instruction %02d.", programCounter - 1);
                     System.exit(1);
                 }
-                else
+                else{
                     accumulator /= immediateDivisor;
+                    accumulator = clampAccumulator();
+                }
+                    
                 break;
-
-            case "38": // ModI
+            // ModM
+            case "38":
                 data = operand.strip();
                 immediateDivisor = Integer.parseInt(data);
                 if(immediateDivisor == 0){
                     System.out.printf("Error: Modulo by zero at instruction %02d.", programCounter - 1);
                     System.exit(1);
-                }else 
+                }else {
                     accumulator %= Integer.parseInt(data);
+                    accumulator = clampAccumulator();
+                }
+                    
                 break;
-
-            case "39": // MulI
+            // MulM
+            case "39":
                 data = operand.strip();
                 accumulator *= Integer.parseInt(data);
+                accumulator = clampAccumulator();
                 break;
-
-            case "40": // JMP
+            // JMP
+            case "40": // JUMP
                 programCounter = Integer.parseInt(operand.strip());
                 break;
-
-            case "41": // JN
+            // JN
+            case "41": // JUMP IF ACC < 0
                 if (accumulator < 0) {
                     programCounter = Integer.parseInt(operand.strip());
                 }
                 break;
-
-            case "42": // JZ
+            // JZ
+            case "42": // JUMP IF ACC == 0
                 if (accumulator == 0) {
                     programCounter = Integer.parseInt(operand.strip());
                 }
